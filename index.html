@@ -271,11 +271,11 @@ tr:hover td { background: var(--surface2); }
       <div class="sub-tab" onclick="switchBreakdown(4)">Vertical</div>
     </div>
     <div class="card">
-      <div class="card-title" id="bd-q2-title">Q2 — Adjusted GP vs GP2 new_new</div>
+      <div class="card-title" id="bd-q2-title">Q2 — GP2 vs GP2 new_new</div>
       <div class="table-wrap"><table id="bd-q2-table"></table></div>
     </div>
     <div class="card">
-      <div class="card-title" id="bd-fy-title">Full Year — Adjusted GP vs GP2 new_new</div>
+      <div class="card-title" id="bd-fy-title">Full Year — GP2 vs GP2 new_new</div>
       <div class="table-wrap"><table id="bd-fy-table"></table></div>
     </div>
   </div>
@@ -292,7 +292,7 @@ tr:hover td { background: var(--surface2); }
       </div>
     </div>
     <div class="card">
-      <div class="card-title" id="client-title">Client Deep Dive — Q2 (Apr–Jun) · Adjusted GP (M VNĐ)</div>
+      <div class="card-title" id="client-title">Client Deep Dive — Q2 (Apr–Jun) · GP2 (M VNĐ)</div>
       <div class="table-wrap"><table id="client-table"></table></div>
     </div>
   </div>
@@ -301,11 +301,11 @@ tr:hover td { background: var(--surface2); }
   <div class="view" id="view-4">
     <div class="metric-grid" id="bridge-metrics"></div>
     <div class="card">
-      <div class="card-title" id="bridge-waterfall-title">Variance Bridge · Adjusted GP (M VNĐ)</div>
+      <div class="card-title" id="bridge-waterfall-title">Variance Bridge · GP2 (M VNĐ)</div>
       <div class="chart-container"><canvas id="bridge-chart"></canvas></div>
     </div>
     <div class="card">
-      <div class="card-title" id="bridge-title">Variance Summary · Adjusted GP (M VNĐ)</div>
+      <div class="card-title" id="bridge-title">Variance Summary · GP2 (M VNĐ)</div>
       <div class="table-wrap"><table id="bridge-table"></table></div>
     </div>
     <div class="finding" id="bridge-finding"></div>
@@ -581,8 +581,8 @@ function renderOverview() {
   const a = document.getElementById('weekA').value;
   const b = document.getElementById('weekB').value;
 
-  const fyA = sumGP(filterQ(wkAData), 'Adjusted GP');
-  const fyB = sumGP(filterQ(wkBData), 'Adjusted GP');
+  const fyA = sumGP(filterQ(wkAData), 'GP2');
+  const fyB = sumGP(filterQ(wkBData), 'GP2');
   const fyVar = fyB - fyA;
   const fyPct = fyA ? fyVar/fyA : 0;
 
@@ -619,7 +619,7 @@ function renderOverview() {
   [1,2,3,4].forEach(q => {
     const dA = wkAData.filter(r=>parseInt(r.Quarter)===q);
     const dB = wkBData.filter(r=>parseInt(r.Quarter)===q);
-    const ga = sumGP(dA,'Adjusted GP'), gb = sumGP(dB,'Adjusted GP');
+    const ga = sumGP(dA,'GP2'), gb = sumGP(dB,'GP2');
     const v = gb-ga, p = ga?v/ga:0;
     totA+=ga; totB+=gb;
     const months = QTR_MONTHS[q].map(m=>MONTH_NAMES[m]).join('–');
@@ -641,7 +641,7 @@ function renderOverview() {
   qMonths.forEach(m => {
     const dA = wkAData.filter(r=>getMonthNum(r.Month)===m);
     const dB = wkBData.filter(r=>getMonthNum(r.Month)===m);
-    const ga = sumGP(dA,'Adjusted GP'), gb = sumGP(dB,'Adjusted GP');
+    const ga = sumGP(dA,'GP2'), gb = sumGP(dB,'GP2');
     const v = gb-ga, p = ga?v/ga:0;
     mRows += `<tr><td>${MONTH_NAMES[m]}</td><td>${fmtM(ga)}</td><td>${fmtM(gb)}</td><td class="${varClass(v)}">${v>=0?'+':''}${fmtM(v)}</td><td class="${varClass(p)}">${fmtPct(p)}</td></tr>`;
   });
@@ -651,8 +651,8 @@ function renderOverview() {
 
   // Finding
   const topQ = [1,2,3,4].map(q => {
-    const ga = sumGP(wkAData.filter(r=>parseInt(r.Quarter)===q),'Adjusted GP');
-    const gb = sumGP(wkBData.filter(r=>parseInt(r.Quarter)===q),'Adjusted GP');
+    const ga = sumGP(wkAData.filter(r=>parseInt(r.Quarter)===q),'GP2');
+    const gb = sumGP(wkBData.filter(r=>parseInt(r.Quarter)===q),'GP2');
     return {q, v:gb-ga, p:ga?(gb-ga)/ga:0};
   }).sort((a,b)=>a.v-b.v)[0];
   document.getElementById('overview-finding').innerHTML = `<strong>🔑 Key Finding:</strong> Full Year variance <span class="${varClass(fyVar)}">${fyVar>=0?'+':''}${fmtM(fyVar)}M (${(fyPct*100).toFixed(1)}%)</span>. Quarter có biến động lớn nhất: <b>Q${topQ.q}</b> <span class="${varClass(topQ.v)}">(${topQ.v>=0?'+':''}${fmtM(topQ.v)}M, ${(topQ.p*100).toFixed(1)}%)</span>.`;
@@ -668,8 +668,8 @@ function renderMonthly() {
   let rows = '';
   let totA=0,totB=0;
   showMonths.forEach(m => {
-    const ga = sumGP(filtA.filter(r=>getMonthNum(r.Month)===m),'Adjusted GP');
-    const gb = sumGP(filtB.filter(r=>getMonthNum(r.Month)===m),'Adjusted GP');
+    const ga = sumGP(filtA.filter(r=>getMonthNum(r.Month)===m),'GP2');
+    const gb = sumGP(filtB.filter(r=>getMonthNum(r.Month)===m),'GP2');
     const v=gb-ga, p=ga?v/ga:0;
     totA+=ga; totB+=gb;
     rows += `<tr><td>${MONTH_NAMES[m]}</td><td>${fmtM(ga)}</td><td>${fmtM(gb)}</td><td class="${varClass(v)}">${v>=0?'+':''}${fmtM(v)}</td><td class="${varClass(p)}">${fmtPct(p)}</td></tr>`;
@@ -682,8 +682,8 @@ function renderMonthly() {
   // Quarterly
   let qRows='', qtotA=0,qtotB=0;
   [1,2,3,4].forEach(q => {
-    const ga = sumGP(wkAData.filter(r=>parseInt(r.Quarter)===q),'Adjusted GP');
-    const gb = sumGP(wkBData.filter(r=>parseInt(r.Quarter)===q),'Adjusted GP');
+    const ga = sumGP(wkAData.filter(r=>parseInt(r.Quarter)===q),'GP2');
+    const gb = sumGP(wkBData.filter(r=>parseInt(r.Quarter)===q),'GP2');
     const v=gb-ga,p=ga?v/ga:0;
     qtotA+=ga; qtotB+=gb;
     qRows += `<tr><td>Q${q}</td><td>${fmtM(ga)}</td><td>${fmtM(gb)}</td><td class="${varClass(v)}">${v>=0?'+':''}${fmtM(v)}</td><td class="${varClass(p)}">${fmtPct(p)}</td></tr>`;
@@ -703,19 +703,19 @@ function renderBreakdown() {
   const a = document.getElementById('weekA').value;
   const b = document.getElementById('weekB').value;
 
-  document.getElementById('bd-q2-title').textContent = `Q2 — ${BD_LABELS[currentBreakdown]} | Adjusted GP vs GP2 new_new (M VNĐ)`;
-  document.getElementById('bd-fy-title').textContent = `Full Year — ${BD_LABELS[currentBreakdown]} | Adjusted GP vs GP2 new_new (M VNĐ)`;
+  document.getElementById('bd-q2-title').textContent = `Q2 — ${BD_LABELS[currentBreakdown]} | GP2 vs GP2 new_new (M VNĐ)`;
+  document.getElementById('bd-fy-title').textContent = `Full Year — ${BD_LABELS[currentBreakdown]} | GP2 vs GP2 new_new (M VNĐ)`;
 
   const qlabel = getQLabel();
-  document.getElementById('bd-q2-title').textContent = `${qlabel} — ${BD_LABELS[currentBreakdown]} | Adjusted GP vs GP2 new_new (M VNĐ)`;
-  document.getElementById('bd-fy-title').textContent = `Full Year — ${BD_LABELS[currentBreakdown]} | Adjusted GP vs GP2 new_new (M VNĐ)`;
+  document.getElementById('bd-q2-title').textContent = `${qlabel} — ${BD_LABELS[currentBreakdown]} | GP2 vs GP2 new_new (M VNĐ)`;
+  document.getElementById('bd-fy-title').textContent = `Full Year — ${BD_LABELS[currentBreakdown]} | GP2 vs GP2 new_new (M VNĐ)`;
   renderBDTable('bd-q2-table', filterQ(wkAData), filterQ(wkBData), dim, a, b);
   renderBDTable('bd-fy-table', wkAData, wkBData, dim, a, b);
 }
 
 function renderBDTable(id, dA, dB, dim, a, b) {
-  const keysA = groupSum(dA, dim, 'Adjusted GP');
-  const keysB = groupSum(dB, dim, 'Adjusted GP');
+  const keysA = groupSum(dA, dim, 'GP2');
+  const keysB = groupSum(dB, dim, 'GP2');
   const gpA_nn = groupSum(dA, dim, 'GP2 new_new');
   const gpB_nn = groupSum(dB, dim, 'GP2 new_new');
   const allKeys = [...new Set([...Object.keys(keysA), ...Object.keys(keysB)])];
@@ -754,7 +754,7 @@ function renderBDTable(id, dA, dB, dim, a, b) {
     <thead>
       <tr>
         <th rowspan="2" style="text-align:left;vertical-align:bottom">Dimension</th>
-        <th colspan="4" style="text-align:center;border-bottom:0.5px solid var(--border);background:#e8f0f8;color:var(--accent)">Adjusted GP</th>
+        <th colspan="4" style="text-align:center;border-bottom:0.5px solid var(--border);background:#e8f0f8;color:var(--accent)">GP2</th>
         <th colspan="2" style="text-align:center;border-bottom:0.5px solid var(--border);background:var(--surface2)">Share</th>
         <th colspan="3" style="text-align:center;border-bottom:0.5px solid var(--border);background:#f0f5e8;color:var(--green)">GP2 new_new</th>
         <th rowspan="2" style="vertical-align:bottom">Driver</th>
@@ -796,7 +796,7 @@ function buildClientKey(r) { return r['Client Name'] || r['Client Code'] || '(Un
 function renderClients() {
   const a = document.getElementById('weekA').value;
   const b = document.getElementById('weekB').value;
-  document.getElementById('client-title').textContent = `Client Deep Dive — ${getQLabel()} · Adjusted GP (M VNĐ) | ${fmtDate(a)} vs ${fmtDate(b)}`;
+  document.getElementById('client-title').textContent = `Client Deep Dive — ${getQLabel()} · GP2 (M VNĐ) | ${fmtDate(a)} vs ${fmtDate(b)}`;
   let dA = filterQ(wkAData);
   let dB = filterQ(wkBData);
 
@@ -805,12 +805,12 @@ function renderClients() {
   const metaA = {}, metaB = {};
   dA.forEach(r => {
     const k = buildClientKey(r);
-    mapA[k] = (mapA[k]||0) + (parseFloat(r['Adjusted GP'])||0);
+    mapA[k] = (mapA[k]||0) + (parseFloat(r['GP2'])||0);
     metaA[k] = {bu: r.BU, pod: r['Pod Director'], fn: r['Fin Function'], sol: r['Fin Solution']};
   });
   dB.forEach(r => {
     const k = buildClientKey(r);
-    mapB[k] = (mapB[k]||0) + (parseFloat(r['Adjusted GP'])||0);
+    mapB[k] = (mapB[k]||0) + (parseFloat(r['GP2'])||0);
     metaB[k] = {bu: r.BU, pod: r['Pod Director'], fn: r['Fin Function'], sol: r['Fin Solution']};
   });
 
@@ -889,18 +889,18 @@ function renderBridge() {
   const dB = filterQ(wkBData);
   const label = getQLabel();
 
-  document.getElementById('bridge-title').textContent = `Variance Summary — ${label} · Adjusted GP (M VNĐ) | ${fmtDate(a)} vs ${fmtDate(b)}`;
+  document.getElementById('bridge-title').textContent = `Variance Summary — ${label} · GP2 (M VNĐ) | ${fmtDate(a)} vs ${fmtDate(b)}`;
 
   // Build client maps
   const mapA = {}, mapB = {}, metaA = {}, metaB = {};
   dA.forEach(r => {
     const k = buildClientKey(r);
-    mapA[k] = (mapA[k]||0) + (parseFloat(r['Adjusted GP'])||0);
+    mapA[k] = (mapA[k]||0) + (parseFloat(r['GP2'])||0);
     metaA[k] = {bu: r.BU, pod: r['Pod Director']};
   });
   dB.forEach(r => {
     const k = buildClientKey(r);
-    mapB[k] = (mapB[k]||0) + (parseFloat(r['Adjusted GP'])||0);
+    mapB[k] = (mapB[k]||0) + (parseFloat(r['GP2'])||0);
     metaB[k] = {bu: r.BU, pod: r['Pod Director']};
   });
 
@@ -974,7 +974,7 @@ function renderBridge() {
   const downV   = scaleDown.reduce((s,r)=>s+r.v,0);
   const upV     = scaleUp.reduce((s,r)=>s+r.v,0);
 
-  document.getElementById('bridge-waterfall-title').textContent = `Variance Bridge — ${label} · Adjusted GP (M VNĐ)`;
+  document.getElementById('bridge-waterfall-title').textContent = `Variance Bridge — ${label} · GP2 (M VNĐ)`;
 
   const waterfallItems = [
     {label: `Opening\n(${fmtDate(a)})`,              val: totalA,  type:'base'},
@@ -1121,7 +1121,7 @@ function renderDataQuality() {
     rows.forEach(r => {
       const code = r['Client Code'] || '(no code)';
       if(!grouped[code]) grouped[code] = {code, bu:r.BU, q:r.Quarter, month:r.Month, gp:0, count:0};
-      grouped[code].gp += parseFloat(r['Adjusted GP'])||0;
+      grouped[code].gp += parseFloat(r['GP2'])||0;
       grouped[code].count++;
     });
     const sorted = Object.values(grouped).sort((a,b)=>b.gp-a.gp);
@@ -1133,7 +1133,7 @@ function renderDataQuality() {
       <td><span class="badge badge-orange">Dùng Client Code thay thế</span></td>
     </tr>`).join('');
     document.getElementById(id).innerHTML = `
-      <thead><tr><th>Client Code</th><th>BU</th><th>Số dòng</th><th>Adjusted GP (M)</th><th>Remark</th></tr></thead>
+      <thead><tr><th>Client Code</th><th>BU</th><th>Số dòng</th><th>GP2 (M)</th><th>Remark</th></tr></thead>
       <tbody>${tableRows}</tbody>`;
   });
 }
