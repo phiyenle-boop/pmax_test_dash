@@ -252,7 +252,7 @@ tr:hover td { background: var(--surface2); }
     </div>
     <div class="metric-grid" id="overview-metrics" style="display:block"></div>
     <div class="card">
-      <div class="card-title">Quarterly Summary</div>
+      <div class="card-title" id="overview-qtable-title">Quarterly Summary</div>
       <div class="table-wrap"><table id="overview-qtable"></table></div>
     </div>
     <div class="card">
@@ -280,6 +280,7 @@ tr:hover td { background: var(--surface2); }
         <div class="sub-tab" onclick="switchGP3Dim(3)">Solution</div>
         <div class="sub-tab" onclick="switchGP3Dim(4)">Vertical</div>
         <div class="sub-tab" onclick="switchGP3Dim(5)">Product</div>
+        <div class="sub-tab" onclick="switchGP3Dim(6)">Client</div>
       </div>
       <div class="metric-grid" id="gp3-metrics"></div>
       <div class="card">
@@ -296,6 +297,7 @@ tr:hover td { background: var(--surface2); }
         <div class="sub-tab" onclick="switchGP3CompDim(3)">Solution</div>
         <div class="sub-tab" onclick="switchGP3CompDim(4)">Vertical</div>
         <div class="sub-tab" onclick="switchGP3CompDim(5)">Product</div>
+        <div class="sub-tab" onclick="switchGP3CompDim(6)">Client</div>
       </div>
       <div class="card">
         <div class="card-title" id="gp3-comp-title">GP3 Comparison by BU</div>
@@ -303,7 +305,7 @@ tr:hover td { background: var(--surface2); }
       </div>
     </div>
   </div>
-<!-- VIEW 2: VARIANCE SUMMARY -->  <div class="view" id="view-2">
+<!-- VIEW 2: BREAKDOWN ANALYSIS -->  <div class="view" id="view-2">
     <div class="sub-tabs">
       <div class="sub-tab active" onclick="switchBreakdown(0)">Pod Director</div>
       <div class="sub-tab" onclick="switchBreakdown(1)">BU</div>
@@ -336,7 +338,7 @@ tr:hover td { background: var(--surface2); }
     </div>
   </div>
 
-  <!-- VIEW 4: CLIENT DEEP DIVE -->  <div class="view" id="view-3">
+  <!-- VIEW 3: CLIENT DEEP DIVE -->  <div class="view" id="view-3">
     <div class="search-bar">
       <input type="text" id="client-search" placeholder="Tìm client..." oninput="filterClients()">
       <select id="client-bu-filter" onchange="filterClients()">
@@ -349,11 +351,11 @@ tr:hover td { background: var(--surface2); }
         <option value="all">All Function</option>
       </select>
       <div class="client-type-tabs">
-        <div class="type-tab active" onclick="setClientType('all')">Tất cả</div>
-        <div class="type-tab" onclick="setClientType('lost')">🔴 Lost</div>
-        <div class="type-tab" onclick="setClientType('new')">🟢 New</div>
-        <div class="type-tab" onclick="setClientType('existing-up')">📈 Existing Scale-up</div>
-        <div class="type-tab" onclick="setClientType('existing-down')">📉 Existing Scale-down</div>
+        <div class="type-tab active" onclick="setClientType('all', this)">Tất cả</div>
+        <div class="type-tab" onclick="setClientType('lost', this)">🔴 Lost</div>
+        <div class="type-tab" onclick="setClientType('new', this)">🟢 New</div>
+        <div class="type-tab" onclick="setClientType('existing-up', this)">📈 Existing Scale-up</div>
+        <div class="type-tab" onclick="setClientType('existing-down', this)">📉 Existing Scale-down</div>
       </div>
     </div>
     <div class="card">
@@ -362,7 +364,7 @@ tr:hover td { background: var(--surface2); }
     </div>
   </div>
 
-  <!-- VIEW 5: DATA QUALITY -->  <div class="view" id="view-4">
+  <!-- VIEW 4: VARIANCE SUMMARY -->  <div class="view" id="view-4">
     <div class="metric-grid" id="bridge-metrics"></div>
     <div class="card">
       <div class="card-title" id="bridge-waterfall-title">Variance Bridge · GP2 (M VNĐ)</div>
@@ -375,7 +377,7 @@ tr:hover td { background: var(--surface2); }
     <div class="finding" id="bridge-finding"></div>
   </div>
 
-  <!-- VIEW 3: BREAKDOWN -->  <div class="view" id="view-5">
+  <!-- VIEW 5: DATA QUALITY -->  <div class="view" id="view-5">
     <div class="card">
       <div class="card-title">Data Quality Overview</div>
       <div id="dq-overview"></div>
@@ -645,10 +647,10 @@ function getQLabel() {
   const labels = {0:'Full Year',1:'Q1 (Jan–Mar)',2:'Q2 (Apr–Jun)',3:'Q3 (Jul–Sep)',4:'Q4 (Oct–Dec)'};
   return labels[getQ()] || 'Full Year';
 }
-function getMLabel() {
-  const m = getM();
-  if(!m) return getQLabel();
-  return MONTH_NAMES[m] + ' ' + getQ() ? 'Q'+getQ() : '';
+// Chỉ áp filter Năm — dùng cho các bảng luôn phải hiện cả năm (Quarterly Summary, Full Year)
+function filterYear(rows) {
+  const y = getYear();
+  return y > 0 ? rows.filter(r => parseInt(r.Year) === y) : rows;
 }
 function filterQ(rows) {
   const q = getQ();
@@ -727,13 +729,15 @@ function renderOverview() {
     );
   })();
 
-  // Quarterly table
+  // Quarterly table — luôn hiện đủ 4 quý, chỉ theo filter Năm (không theo Quarter/Tháng)
+  const yearA = filterYear(wkAData);
+  const yearB = filterYear(wkBData);
   let qRows = '';
   let totAGP2 = 0, totANN = 0, totA = 0;
   let totBGP2 = 0, totBNN = 0, totB = 0;
   [1,2,3,4].forEach(q => {
-    const dA = filteredA.filter(r=>parseInt(r.Quarter)===q);
-    const dB = filteredB.filter(r=>parseInt(r.Quarter)===q);
+    const dA = yearA.filter(r=>parseInt(r.Quarter)===q);
+    const dB = yearB.filter(r=>parseInt(r.Quarter)===q);
     const ga_gp2 = sumGP(dA,'GP2');
     const ga_nn = sumGP(dA,'GP2 new_new');
     const ga_total = ga_gp2 + ga_nn;
@@ -767,7 +771,7 @@ function renderOverview() {
         <th>GP2</th><th>GP2 new_new</th><th>Total GP2</th>
       </tr>
     </thead>
-    <tbody>${qRows}<tr class="total-row"><td>Full Year</td><td>${fmtM(totAGP2)}</td><td>${fmtM(totANN)}</td><td>${fmtM(totA)}</td><td>${fmtM(totBGP2)}</td><td>${fmtM(totBNN)}</td><td>${fmtM(totB)}</td><td class="${varClass(tv)}">${tv>=0?'+':''}${fmtM(tv)}</td><td class="${varClass(tp)}">${fmtPct(tp)}</td></tr></tbody>`;
+    <tbody>${qRows}<tr class="total-row"><td>Full Year${getYear()>0?' '+getYear():''}</td><td>${fmtM(totAGP2)}</td><td>${fmtM(totANN)}</td><td>${fmtM(totA)}</td><td>${fmtM(totBGP2)}</td><td>${fmtM(totBNN)}</td><td>${fmtM(totB)}</td><td class="${varClass(tv)}">${tv>=0?'+':''}${fmtM(tv)}</td><td class="${varClass(tp)}">${fmtPct(tp)}</td></tr></tbody>`;
 
   // Monthly detail for selected quarter
   const qMonths = getM() > 0
@@ -804,51 +808,22 @@ function renderOverview() {
     </thead>
     <tbody>${mRows}</tbody>`;
 
-  // Finding
+  // Finding — tính trên cả năm để khớp với chữ "Full Year"
   const topQ = [1,2,3,4].map(q => {
-    const ga = sumGP(filteredA.filter(r=>parseInt(r.Quarter)===q),'GP2') + sumGP(filteredA.filter(r=>parseInt(r.Quarter)===q),'GP2 new_new');
-    const gb = sumGP(filteredB.filter(r=>parseInt(r.Quarter)===q),'GP2') + sumGP(filteredB.filter(r=>parseInt(r.Quarter)===q),'GP2 new_new');
+    const qA = yearA.filter(r=>parseInt(r.Quarter)===q);
+    const qB = yearB.filter(r=>parseInt(r.Quarter)===q);
+    const ga = sumGP(qA,'GP2') + sumGP(qA,'GP2 new_new');
+    const gb = sumGP(qB,'GP2') + sumGP(qB,'GP2 new_new');
     return {q, v:gb-ga, p:ga?(gb-ga)/ga:0};
   }).sort((a,b)=>a.v-b.v)[0];
+  const fyTotVar = totB - totA;
+  const fyTotPct = totA ? fyTotVar/totA : 0;
+  const qtTitle = document.getElementById('overview-qtable-title');
+  if(qtTitle) qtTitle.textContent = 'Quarterly Summary' + (getYear() > 0 ? ' — ' + getYear() : ' — tất cả các năm') + ' (luôn hiện cả 4 quý, không theo filter Quarter/Tháng)';
+
   renderOverviewKPI();
 
-  document.getElementById('overview-finding').innerHTML = `<strong>🔑 Key Finding:</strong> Full Year Total GP2 variance <span class="${varClass(totalVar)}">${totalVar>=0?'+':''}${fmtM(totalVar)}M (${(totalPct*100).toFixed(1)}%)</span>. Quarter có biến động lớn nhất: <b>Q${topQ.q}</b> <span class="${varClass(topQ.v)}">(${topQ.v>=0?'+':''}${fmtM(topQ.v)}M, ${(topQ.p*100).toFixed(1)}%)</span>.`;
-}
-
-// ── MONTHLY SUMMARY ────────────────────────────────────────────────────────
-function renderMonthly() {
-  const a = document.getElementById('weekA').value;
-  const b = document.getElementById('weekB').value;
-  const filtA = filterQ(wkAData);
-  const filtB = filterQ(wkBData);
-  const showMonths = getQ()===0?[1,2,3,4,5,6,7,8,9,10,11,12]:(QTR_MONTHS[getQ()]||[1,2,3,4,5,6,7,8,9,10,11,12]);
-  let rows = '';
-  let totA=0,totB=0;
-  showMonths.forEach(m => {
-    const ga = sumGP(filtA.filter(r=>getMonthNum(r.Month)===m),'GP2');
-    const gb = sumGP(filtB.filter(r=>getMonthNum(r.Month)===m),'GP2');
-    const v=gb-ga, p=ga?v/ga:0;
-    totA+=ga; totB+=gb;
-    rows += `<tr><td>${MONTH_NAMES[m]}</td><td>${fmtM(ga)}</td><td>${fmtM(gb)}</td><td class="${varClass(v)}">${v>=0?'+':''}${fmtM(v)}</td><td class="${varClass(p)}">${fmtPct(p)}</td></tr>`;
-  });
-  const tv=totB-totA,tp=totA?tv/totA:0;
-  document.getElementById('monthly-table').innerHTML = `
-    <thead><tr><th>Tháng</th><th>${fmtDate(a)}</th><th>${fmtDate(b)}</th><th>Variance (M)</th><th>Var%</th></tr></thead>
-    <tbody>${rows}<tr class="total-row"><td>Full Year</td><td>${fmtM(totA)}</td><td>${fmtM(totB)}</td><td class="${varClass(tv)}">${tv>=0?'+':''}${fmtM(tv)}</td><td class="${varClass(tp)}">${fmtPct(tp)}</td></tr></tbody>`;
-
-  // Quarterly
-  let qRows='', qtotA=0,qtotB=0;
-  [1,2,3,4].forEach(q => {
-    const ga = sumGP(wkAData.filter(r=>parseInt(r.Quarter)===q),'GP2');
-    const gb = sumGP(wkBData.filter(r=>parseInt(r.Quarter)===q),'GP2');
-    const v=gb-ga,p=ga?v/ga:0;
-    qtotA+=ga; qtotB+=gb;
-    qRows += `<tr><td>Q${q}</td><td>${fmtM(ga)}</td><td>${fmtM(gb)}</td><td class="${varClass(v)}">${v>=0?'+':''}${fmtM(v)}</td><td class="${varClass(p)}">${fmtPct(p)}</td></tr>`;
-  });
-  const qtv=qtotB-qtotA,qtp=qtotA?qtv/qtotA:0;
-  document.getElementById('monthly-qtable').innerHTML = `
-    <thead><tr><th>Quarter</th><th>${fmtDate(a)}</th><th>${fmtDate(b)}</th><th>Variance (M)</th><th>Var%</th></tr></thead>
-    <tbody>${qRows}<tr class="total-row"><td>Full Year</td><td>${fmtM(qtotA)}</td><td>${fmtM(qtotB)}</td><td class="${varClass(qtv)}">${qtv>=0?'+':''}${fmtM(qtv)}</td><td class="${varClass(qtp)}">${fmtPct(qtp)}</td></tr></tbody>`;
+  document.getElementById('overview-finding').innerHTML = `<strong>🔑 Key Finding:</strong> Full Year Total GP2 variance <span class="${varClass(fyTotVar)}">${fyTotVar>=0?'+':''}${fmtM(fyTotVar)}M (${(fyTotPct*100).toFixed(1)}%)</span>. Quarter có biến động lớn nhất: <b>Q${topQ.q}</b> <span class="${varClass(topQ.v)}">(${topQ.v>=0?'+':''}${fmtM(topQ.v)}M, ${(topQ.p*100).toFixed(1)}%)</span>. Riêng ${getQLabel()} đang chọn: <span class="${varClass(totalVar)}">${totalVar>=0?'+':''}${fmtM(totalVar)}M (${(totalPct*100).toFixed(1)}%)</span>.`;
 }
 
 // ── BREAKDOWN ──────────────────────────────────────────────────────────────
@@ -870,19 +845,13 @@ function renderBDTable(id, dA, dB, dim, a, b) {
   const totA_nn = Object.values(gpA_nn).reduce((s,v)=>s+v,0);
   const totB_nn = Object.values(gpB_nn).reduce((s,v)=>s+v,0);
 
-  // Also aggregate Adjust GP2 (used for Total GP2 = Adjusted GP + GP2 new_new)
-  const adjA = groupSum(dA, dim, 'Adjust GP2');
-  const adjB = groupSum(dB, dim, 'Adjust GP2');
-  const totAdjA = Object.values(adjA).reduce((s,v)=>s+v,0);
-  const totAdjB = Object.values(adjB).reduce((s,v)=>s+v,0);
-
   const sorted = allKeys.map(k => {
     const ga=keysA[k]||0, gb=keysB[k]||0;
     const v=gb-ga, p=ga?v/ga:0;
-    return {k,ga,gb,v,p,ga_nn:gpA_nn[k]||0,gb_nn:gpB_nn[k]||0,adj_a:adjA[k]||0,adj_b:adjB[k]||0};
+    return {k,ga,gb,v,p,ga_nn:gpA_nn[k]||0,gb_nn:gpB_nn[k]||0};
   }).sort((a,b)=>a.v-b.v);
 
-  let rows = sorted.map(({k,ga,gb,v,p,ga_nn,gb_nn,adj_a,adj_b}) => {
+  let rows = sorted.map(({k,ga,gb,v,p,ga_nn,gb_nn}) => {
     const v_nn = gb_nn-ga_nn;
     const shareA = totA ? (ga/totA*100).toFixed(1)+'%' : '–';
     const shareB = totB ? (gb/totB*100).toFixed(1)+'%' : '–';
@@ -971,9 +940,9 @@ function renderBreakdown() {
   document.getElementById('bd-fy-card').style.display = isDetail ? 'none' : 'block';
   if (!isDetail) {
     document.getElementById('bd-q2-title').textContent = qlabel + ' — ' + lbl + ' | GP2 vs GP2 new_new (M VND)';
-    document.getElementById('bd-fy-title').textContent = 'Full Year — ' + lbl + ' | GP2 vs GP2 new_new (M VND)';
+    document.getElementById('bd-fy-title').textContent = 'Full Year' + (getYear()>0 ? ' ' + getYear() : '') + ' — ' + lbl + ' | GP2 vs GP2 new_new (M VND)';
     renderBDTable('bd-q2-table', filterQ(wkAData), filterQ(wkBData), dim, a, b);
-    renderBDTable('bd-fy-table', wkAData, wkBData, dim, a, b);
+    renderBDTable('bd-fy-table', filterYear(wkAData), filterYear(wkBData), dim, a, b);
   }
   if(isDetail) renderBUDetailTable();
   renderKPIBreakdown();
@@ -1045,7 +1014,7 @@ function renderBUDetailTable() {
         const ca=cliMapA[cli]||0, cb=cliMapB[cli]||0, cv=cb-ca, cp=ca?cv/ca:0;
         if(ca===0 && cb===0) return;
         rows += '<tr class="cli-sub-' + safeSub + '" style="display:none">';
-        rows += '<td style="padding-left:60px;color:var(--text2);font-size:12px">' + cli + '</td>';
+        rows += '<td style="padding-left:60px;color:var(--text2);font-size:12px">' + clientLabel(cli) + '</td>';
         rows += '<td style="font-size:12px">' + fmtM(ca) + '</td><td style="font-size:12px">' + fmtM(cb) + '</td>';
         rows += '<td class="' + varClass(cv) + '" style="font-size:12px">' + (cv>=0?'+':'') + fmtM(cv) + '</td>';
         rows += '<td class="' + varClass(cp) + '" style="font-size:12px">' + fmtPct(cp) + '</td>';
@@ -1090,7 +1059,15 @@ function switchBreakdown(i) {
 }
 
 // ── CLIENT DEEP DIVE ───────────────────────────────────────────────────────
-function buildClientKey(r) { return r['Client Name'] || r['Client Code'] || '(Unknown)'; }
+const CLIENT_KEY_SEP = ' \u2016 ';
+function clientNameOf(r) { return r['Client Name'] || r['Client Code'] || '(Unknown)'; }
+// Key gộp BU để 2 client trùng tên ở 2 BU khác nhau không bị cộng dồn thành 1 dòng
+function buildClientKey(r) { return (r.BU || '(No BU)') + CLIENT_KEY_SEP + clientNameOf(r); }
+// Bỏ tiền tố BU khi hiển thị (BU đã có cột riêng)
+function clientLabel(key) {
+  const s = String(key); const i = s.indexOf(CLIENT_KEY_SEP);
+  return i >= 0 ? s.slice(i + CLIENT_KEY_SEP.length) : s;
+}
 
 function renderClients() {
   const a = document.getElementById('weekA').value;
@@ -1150,6 +1127,7 @@ function renderClients() {
     const meta = metaB[k] || metaA[k] || {};
     return {
       k,
+      name: clientLabel(k),
       ga,
       gb,
       v,
@@ -1159,7 +1137,10 @@ function renderClients() {
       pod: meta.pod || '',
       fnList,
       fn: fnList.join(', '),
-      sol: meta.sol || ''
+      sol: meta.sol || '',
+      // Tính sẵn giá trị theo từng Function để filterClients không phải quét lại toàn bộ data
+      fnVA: fnValA[k] || {},
+      fnVB: fnValB[k] || {}
     };
   }).filter(r => r !== null);
 
@@ -1182,7 +1163,7 @@ function filterClients() {
   if(buFilter && buFilter !== 'all') rows = rows.filter(r=>r.bu.split(', ').includes(buFilter));
   if(podFilter && podFilter !== 'all') rows = rows.filter(r=>r.pod === podFilter);
   if(fnFilter && fnFilter !== 'all') rows = rows.filter(r=>r.fnList.includes(fnFilter));
-  if(q) rows = rows.filter(r=>r.k.toLowerCase().includes(q));
+  if(q) rows = rows.filter(r=>r.name.toLowerCase().includes(q));
 
   // Sort: lost by ga desc, new by gb desc, existing by |v| desc
   rows = rows.sort((a,b) => {
@@ -1220,7 +1201,7 @@ function filterClients() {
     }
   };
   
-  rows.slice(0,200).forEach((r, idx, arr) => {
+  rows.forEach((r, idx, arr) => {
     if(r.type !== lastType) {
       flushSection(lastType);
       lastType = r.type;
@@ -1228,11 +1209,9 @@ function filterClients() {
     }
     const typeBadge = r.type==='lost' ? '<span class="badge badge-red">Lost</span>' : r.type==='new' ? '<span class="badge badge-green">New</span>' : '';
     const safeKey = r.k.replace(/[^a-zA-Z0-9]/g,'_');
-    const visibleFns = r.fnList.filter(fn => {
-      const fa = filterQ(wkAData).filter(rr => buildClientKey(rr) === r.k && rr['Fin Function'] === fn).reduce((s,rr)=>s+(parseFloat(rr['GP2'])||0),0);
-      const fb = filterQ(wkBData).filter(rr => buildClientKey(rr) === r.k && rr['Fin Function'] === fn).reduce((s,rr)=>s+(parseFloat(rr['GP2'])||0),0);
-      return fa !== 0 || fb !== 0;
-    });
+    const fnA = (fn) => (r.fnVA && r.fnVA[fn]) || 0;
+    const fnB = (fn) => (r.fnVB && r.fnVB[fn]) || 0;
+    const visibleFns = r.fnList.filter(fn => fnA(fn) !== 0 || fnB(fn) !== 0);
     const hasMultiFn = visibleFns.length > 1;
     
     // If Function filter is active, check if this client has matching function
@@ -1244,7 +1223,7 @@ function filterClients() {
     
     if(showParent) {
       sectionDetailsHtml += `<tr data-client-key="${safeKey}" onclick="toggleClientRow(this, '${safeKey}')" style="cursor:pointer;">
-        <td><span id="chev_client_${safeKey}" style="display:inline-block;width:14px;margin-right:6px;transition:transform 0.15s;visibility:${hasMultiFn?'visible':'hidden'}">▶</span>${r.k} ${typeBadge}</td>
+        <td><span id="chev_client_${safeKey}" style="display:inline-block;width:14px;margin-right:6px;transition:transform 0.15s;visibility:${hasMultiFn?'visible':'hidden'}">▶</span>${r.name} ${typeBadge}</td>
         <td>${r.bu}</td><td>${r.pod}</td><td>${r.fn || 'N/A'}</td>
         <td class="week-a-col">${fmtM(r.ga)}</td><td class="week-b-col">${fmtM(r.gb)}</td>
         <td class="${varClass(r.v)}">${r.v>=0?'+':''}${fmtM(r.v)}</td>
@@ -1257,13 +1236,12 @@ function filterClients() {
       // If function filter is active and parent is hidden, show function detail rows for matching functions
       const matchingFns = r.fnList.filter(fn => fnFilter === fn);
       matchingFns.forEach(fn => {
-        const fa = filterQ(wkAData).filter(rr => buildClientKey(rr) === r.k && rr['Fin Function'] === fn).reduce((s,rr)=>s+(parseFloat(rr['GP2'])||0),0);
-        const fb = filterQ(wkBData).filter(rr => buildClientKey(rr) === r.k && rr['Fin Function'] === fn).reduce((s,rr)=>s+(parseFloat(rr['GP2'])||0),0);
+        const fa = fnA(fn), fb = fnB(fn);
         if(fa === 0 && fb === 0) return;
         const fv = fb-fa;
         const fp = fa?fv/fa:0;
         sectionDetailsHtml += `<tr style="background:var(--surface2)">
-          <td style="padding-left:28px;color:var(--text2)">${r.k}</td>
+          <td style="padding-left:28px;color:var(--text2)">${r.name}</td>
           <td>${r.bu}</td><td>${r.pod}</td><td>${fn}</td>
           <td class="week-a-col">${fmtM(fa)}</td><td class="week-b-col">${fmtM(fb)}</td>
           <td class="${varClass(fv)}">${fv>=0?'+':''}${fmtM(fv)}</td>
@@ -1277,14 +1255,13 @@ function filterClients() {
     
     if(showParent && r.fnList.length > 1) {
       r.fnList.forEach(fn => {
-        const fa = filterQ(wkAData).filter(rr => buildClientKey(rr) === r.k && rr['Fin Function'] === fn).reduce((s,rr)=>s+(parseFloat(rr['GP2'])||0),0);
-        const fb = filterQ(wkBData).filter(rr => buildClientKey(rr) === r.k && rr['Fin Function'] === fn).reduce((s,rr)=>s+(parseFloat(rr['GP2'])||0),0);
+        const fa = fnA(fn), fb = fnB(fn);
         if(fa === 0 && fb === 0) return;
         
         const fv = fb-fa;
         const fp = fa?fv/fa:0;
         sectionDetailsHtml += `<tr class="client-fn-${safeKey}" style="display:none;background:var(--surface2)">
-          <td style="padding-left:28px;color:var(--text2)">${r.k}</td>
+          <td style="padding-left:28px;color:var(--text2)">${r.name}</td>
           <td>${r.bu}</td><td>${r.pod}</td><td>${fn}</td>
           <td class="week-a-col">${fmtM(fa)}</td><td class="week-b-col">${fmtM(fb)}</td>
           <td class="${varClass(fv)}">${fv>=0?'+':''}${fmtM(fv)}</td>
@@ -1295,6 +1272,9 @@ function filterClients() {
   });
   
   flushSection(lastType);
+
+  const cTitle = document.getElementById('client-title');
+  if(cTitle) cTitle.textContent = `Client Deep Dive — ${getQLabel()} · GP2 (M VNĐ) | ${fmtDate(a)} vs ${fmtDate(b)} · ${rows.length} client`;
 
   document.getElementById('client-table').innerHTML = `
     <thead><tr><th>Client</th><th>BU</th><th>Pod Director</th><th>Function</th><th class="week-a-header">${fmtDate(a)}</th><th class="week-b-header">${fmtDate(b)}</th><th>Var (M)</th><th>Var%</th></tr></thead>
@@ -1320,9 +1300,9 @@ function populateClientFilters(rows) {
   buSel.innerHTML = '<option value="all">All BU</option>' + [...buSet].sort().map(v => `<option value="${v}">${v}</option>`).join('');
   podSel.innerHTML = '<option value="all">All Pod Director</option>' + [...podSet].sort().map(v => `<option value="${v}">${v}</option>`).join('');
   fnSel.innerHTML = '<option value="all">All Function</option>' + [...fnSet].sort().map(v => `<option value="${v}">${v}</option>`).join('');
-  if([...'all', ...buSet].includes(currentBU)) buSel.value = currentBU;
-  if([...'all', ...podSet].includes(currentPod)) podSel.value = currentPod;
-  if([...'all', ...fnSet].includes(currentFn)) fnSel.value = currentFn;
+  if(currentBU === 'all' || buSet.has(currentBU)) buSel.value = currentBU;
+  if(currentPod === 'all' || podSet.has(currentPod)) podSel.value = currentPod;
+  if(currentFn === 'all' || fnSet.has(currentFn)) fnSel.value = currentFn;
 }
 
 function toggleClientRow(row, key) {
@@ -1334,10 +1314,11 @@ function toggleClientRow(row, key) {
   if(chev) chev.style.transform = isOpen ? '' : 'rotate(90deg)';
 }
 
-function setClientType(t) {
+function setClientType(t, el) {
   currentClientType = t;
-  document.querySelectorAll('.type-tab').forEach(el => el.classList.remove('active'));
-  event.target.classList.add('active');
+  document.querySelectorAll('.type-tab').forEach(x => x.classList.remove('active'));
+  const target = el || (typeof event !== 'undefined' && event ? event.target : null);
+  if(target) target.classList.add('active');
   filterClients();
 }
 
@@ -1376,7 +1357,7 @@ function renderBridge() {
     const ga = mapA[k]||0, gb = mapB[k]||0;
     const v = gb - ga;
     const meta = metaB[k] || metaA[k] || {};
-    const row = {k, ga, gb, v, bu: meta.bu||'', pod: meta.pod||''};
+    const row = {k, name: clientLabel(k), ga, gb, v, bu: meta.bu||'', pod: meta.pod||''};
     if(ga === 0 && gb === 0) return;                                // Bỏ qua cả 2 đều = 0
     if(!(k in mapA) || mapA[k] === 0)         gained.push(row);    // New client
     else if(!(k in mapB) || mapB[k] === 0)     lost.push(row);       // Lost client
@@ -1500,7 +1481,7 @@ function renderBridge() {
       : type==='up'?'<span class="badge badge-green">Scale-up</span>'
       : '<span class="badge badge-orange">Scale-down</span>';
     return `<tr>
-      <td>${r.k} ${badge}</td>
+      <td>${r.name} ${badge}</td>
       <td>${r.bu}</td>
       <td>${r.pod}</td>
       <td>${fmtM(r.ga)}</td>
@@ -2152,8 +2133,8 @@ let gp3CurrentView = 0;
 let gp3CurrentDim = 0;
 let gp3CurrentCompDim = 0;
 
-const GP3_DIMS     = ['bu','pod_director','new_coe','solution','vertical','product_name'];
-const GP3_LABELS   = ['BU','Pod Director','Function','Solution','Vertical','Product'];
+const GP3_DIMS     = ['bu','pod_director','new_coe','solution','vertical','product_name','__client'];
+const GP3_LABELS   = ['BU','Pod Director','Function','Solution','Vertical','Product','Client'];
 const DIV = 1e6; // đổi đồng → triệu
 
 async function loadGP3Data() {
@@ -2240,6 +2221,20 @@ function renderGP3() {
 
   gp3WeekA = filterGP3(rawA);
   gp3WeekB = filterGP3(rawB);
+
+  // Trường ảo cho dimension Client: tách theo BU khi 1 tên client thuộc nhiều BU
+  // (nếu không tách thì 2 client khác nhau trùng tên sẽ bị cộng dồn thành 1 dòng)
+  const buOfName = {};
+  gp3WeekA.concat(gp3WeekB).forEach(r => {
+    const nm = String(r.client_name == null || r.client_name === '' ? '(Unknown)' : r.client_name).trim();
+    const bu = String(r.bu == null || r.bu === '' ? '(No BU)' : r.bu).trim();
+    (buOfName[nm] = buOfName[nm] || new Set()).add(bu);
+  });
+  gp3WeekA.concat(gp3WeekB).forEach(r => {
+    const nm = String(r.client_name == null || r.client_name === '' ? '(Unknown)' : r.client_name).trim();
+    const bu = String(r.bu == null || r.bu === '' ? '(No BU)' : r.bu).trim();
+    r.__client = (buOfName[nm] && buOfName[nm].size > 1) ? nm + ' (' + bu + ')' : nm;
+  });
 
 
   renderGP3Current();
