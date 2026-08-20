@@ -584,6 +584,9 @@ function renderAll() {
   renderClients();
   renderBridge();
   renderDataQuality();
+  // GP3 đã tải rồi thì render lại luôn, nếu không tab GP3 sẽ giữ số của filter cũ
+  // cho tới khi người dùng bấm sang tab khác rồi quay lại
+  if(gp3RawData && gp3RawData.length) renderGP3();
 }
 
 function fmtDate(d) {
@@ -646,6 +649,13 @@ function getYear() { return parseInt(document.getElementById('globalYear').value
 function getQLabel() {
   const labels = {0:'Full Year',1:'Q1 (Jan–Mar)',2:'Q2 (Apr–Jun)',3:'Q3 (Jul–Sep)',4:'Q4 (Oct–Dec)'};
   return labels[getQ()] || 'Full Year';
+}
+// Nhãn kỳ đang xem: có chọn tháng thì ghi tháng, không thì ghi quý
+function getPeriodLabel() {
+  const m = getM();
+  if(!m) return getQLabel();
+  const q = getQ();
+  return MONTH_NAMES[m] + (q > 0 ? ' (Q' + q + ')' : '');
 }
 // Chỉ áp filter Năm — dùng cho các bảng luôn phải hiện cả năm (Quarterly Summary, Full Year)
 function filterYear(rows) {
@@ -711,21 +721,21 @@ function renderOverview() {
     const vc = (v) => v>=0 ? 'var(--green)' : 'var(--red)';
 
     return gt('#378ADD','GP2') + grid(
-      card(getQLabel()+' — '+fmtDate(a), fmtM(fyA), 'M VNĐ') +
-      card(getQLabel()+' — '+fmtDate(b), fmtM(fyB), 'M VNĐ') +
-      card('Variance '+getQLabel(), (fyVar>=0?'+':'')+fmtM(fyVar), fmtPct(fyPct), vc(fyVar))
+      card(getPeriodLabel()+' — '+fmtDate(a), fmtM(fyA), 'M VNĐ') +
+      card(getPeriodLabel()+' — '+fmtDate(b), fmtM(fyB), 'M VNĐ') +
+      card('Variance '+getPeriodLabel(), (fyVar>=0?'+':'')+fmtM(fyVar), fmtPct(fyPct), vc(fyVar))
     ) +
     '<div style="height:0.5px;background:var(--border);margin:4px 0 12px"></div>' +
     gt('#1D9E75','GP2 new_new') + grid(
-      card(getQLabel()+' — '+fmtDate(a), fmtM(nn_A), 'M VNĐ') +
-      card(getQLabel()+' — '+fmtDate(b), fmtM(nn_B), 'M VNĐ') +
-      card('Variance '+getQLabel(), (nn_Var>=0?'+':'')+fmtM(nn_Var), fmtPct(nn_Pct), vc(nn_Var))
+      card(getPeriodLabel()+' — '+fmtDate(a), fmtM(nn_A), 'M VNĐ') +
+      card(getPeriodLabel()+' — '+fmtDate(b), fmtM(nn_B), 'M VNĐ') +
+      card('Variance '+getPeriodLabel(), (nn_Var>=0?'+':'')+fmtM(nn_Var), fmtPct(nn_Pct), vc(nn_Var))
     ) +
     '<div style="height:0.5px;background:var(--border);margin:4px 0 12px"></div>' +
     gt('#BA7517','Total GP2') + grid(
-      card(getQLabel()+' — '+fmtDate(a), fmtM(adj_A), 'M VNĐ') +
-      card(getQLabel()+' — '+fmtDate(b), fmtM(adj_B), 'M VNĐ') +
-      card('Variance '+getQLabel(), (adj_Var>=0?'+':'')+fmtM(adj_Var), fmtPct(adj_Pct), vc(adj_Var))
+      card(getPeriodLabel()+' — '+fmtDate(a), fmtM(adj_A), 'M VNĐ') +
+      card(getPeriodLabel()+' — '+fmtDate(b), fmtM(adj_B), 'M VNĐ') +
+      card('Variance '+getPeriodLabel(), (adj_Var>=0?'+':'')+fmtM(adj_Var), fmtPct(adj_Pct), vc(adj_Var))
     );
   })();
 
@@ -823,7 +833,7 @@ function renderOverview() {
 
   renderOverviewKPI();
 
-  document.getElementById('overview-finding').innerHTML = `<strong>🔑 Key Finding:</strong> Full Year Total GP2 variance <span class="${varClass(fyTotVar)}">${fyTotVar>=0?'+':''}${fmtM(fyTotVar)}M (${(fyTotPct*100).toFixed(1)}%)</span>. Quarter có biến động lớn nhất: <b>Q${topQ.q}</b> <span class="${varClass(topQ.v)}">(${topQ.v>=0?'+':''}${fmtM(topQ.v)}M, ${(topQ.p*100).toFixed(1)}%)</span>. Riêng ${getQLabel()} đang chọn: <span class="${varClass(totalVar)}">${totalVar>=0?'+':''}${fmtM(totalVar)}M (${(totalPct*100).toFixed(1)}%)</span>.`;
+  document.getElementById('overview-finding').innerHTML = `<strong>🔑 Key Finding:</strong> Full Year Total GP2 variance <span class="${varClass(fyTotVar)}">${fyTotVar>=0?'+':''}${fmtM(fyTotVar)}M (${(fyTotPct*100).toFixed(1)}%)</span>. Quarter có biến động lớn nhất: <b>Q${topQ.q}</b> <span class="${varClass(topQ.v)}">(${topQ.v>=0?'+':''}${fmtM(topQ.v)}M, ${(topQ.p*100).toFixed(1)}%)</span>. Riêng ${getPeriodLabel()} đang chọn: <span class="${varClass(totalVar)}">${totalVar>=0?'+':''}${fmtM(totalVar)}M (${(totalPct*100).toFixed(1)}%)</span>.`;
 }
 
 // ── BREAKDOWN ──────────────────────────────────────────────────────────────
@@ -932,7 +942,7 @@ function renderBreakdown() {
   const dim = isDetail ? 'BU' : BD_DIMS[currentBreakdown];
   const a = document.getElementById('weekA').value;
   const b = document.getElementById('weekB').value;
-  const qlabel = getQLabel();
+  const qlabel = getPeriodLabel();
   const lbl = isDetail ? 'BU' : BD_LABELS[currentBreakdown];
 
   document.getElementById('bd-detail-card').style.display = isDetail ? 'block' : 'none';
@@ -962,7 +972,7 @@ function renderBUDetailTable() {
   const b = document.getElementById('weekB').value;
   const subDim = BU_DETAIL_DIMS[currentBUDetail];
   const subLabel = BU_DETAIL_LABELS[currentBUDetail];
-  document.getElementById('bd-detail-title').textContent = getQLabel() + ' — BU / ' + subLabel + ' · Total GP2 (M VND) | ' + fmtDate(a) + ' vs ' + fmtDate(b);
+  document.getElementById('bd-detail-title').textContent = getPeriodLabel() + ' — BU / ' + subLabel + ' · Total GP2 (M VND) | ' + fmtDate(a) + ' vs ' + fmtDate(b);
 
   _buDetailDataA = filterQ(wkAData);
   _buDetailDataB = filterQ(wkBData);
@@ -1072,7 +1082,7 @@ function clientLabel(key) {
 function renderClients() {
   const a = document.getElementById('weekA').value;
   const b = document.getElementById('weekB').value;
-  document.getElementById('client-title').textContent = `Client Deep Dive — ${getQLabel()} · GP2 (M VNĐ) | ${fmtDate(a)} vs ${fmtDate(b)}`;
+  document.getElementById('client-title').textContent = `Client Deep Dive — ${getPeriodLabel()} · GP2 (M VNĐ) | ${fmtDate(a)} vs ${fmtDate(b)}`;
   let dA = filterQ(wkAData);
   let dB = filterQ(wkBData);
 
@@ -1274,7 +1284,7 @@ function filterClients() {
   flushSection(lastType);
 
   const cTitle = document.getElementById('client-title');
-  if(cTitle) cTitle.textContent = `Client Deep Dive — ${getQLabel()} · GP2 (M VNĐ) | ${fmtDate(a)} vs ${fmtDate(b)} · ${rows.length} client`;
+  if(cTitle) cTitle.textContent = `Client Deep Dive — ${getPeriodLabel()} · GP2 (M VNĐ) | ${fmtDate(a)} vs ${fmtDate(b)} · ${rows.length} client`;
 
   document.getElementById('client-table').innerHTML = `
     <thead><tr><th>Client</th><th>BU</th><th>Pod Director</th><th>Function</th><th class="week-a-header">${fmtDate(a)}</th><th class="week-b-header">${fmtDate(b)}</th><th>Var (M)</th><th>Var%</th></tr></thead>
@@ -1332,7 +1342,7 @@ function renderBridge() {
 
   const dA = filterQ(wkAData);
   const dB = filterQ(wkBData);
-  const label = getQLabel();
+  const label = getPeriodLabel();
 
   document.getElementById('bridge-title').textContent = `Variance Summary — ${label} · GP2 (M VNĐ) | ${fmtDate(a)} vs ${fmtDate(b)}`;
 
@@ -1886,7 +1896,7 @@ function renderOverviewKPI() {
   if(!el) return;
   const titleEl = document.getElementById('overview-kpi-title');
   const b = document.getElementById('weekB').value;
-  if(titleEl) titleEl.textContent = 'KPI Tracking — ' + getQLabel() + ' · Total GP2 (GP2 + new_new) vs GP2 KPI';
+  if(titleEl) titleEl.textContent = 'KPI Tracking — ' + getPeriodLabel() + ' · Total GP2 (GP2 + new_new) vs GP2 KPI';
 
   if(!kpiRawData.length || !kpiCols || !kpiCols.kpi) {
     el.innerHTML = '<div style="font-size:13px;color:var(--red)">' + (kpiStatusMsg || 'Chưa có dữ liệu KPI') + '</div>';
@@ -1914,7 +1924,7 @@ function renderOverviewKPI() {
 
   el.innerHTML =
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">' +
-      card('GP2 KPI', fmtM0(kpi), 'M VNĐ · ' + getQLabel()) +
+      card('GP2 KPI', fmtM0(kpi), 'M VNĐ · ' + getPeriodLabel()) +
       card('Forecast ' + fmtDate(b), fmtM0(tb), 'Total GP2 (M VNĐ)') +
       card('Gap vs KPI', fmtSigned0(gap), gap >= 0 ? 'vượt KPI' : 'còn thiếu', gap >= 0 ? 'var(--green)' : 'var(--red)') +
       card('Achievement', ach != null ? (ach * 100).toFixed(1) + '%' : '–', kpiBadge(ach), col) +
@@ -1939,7 +1949,7 @@ function renderKPIBreakdown() {
   const tbl  = document.getElementById('kpi-bd-table');
   const note = document.getElementById('kpi-bd-note');
   document.getElementById('kpi-bd-title').textContent =
-    'KPI Tracking — ' + lbl + ' | ' + getQLabel() + ' · Total GP2 (GP2 + new_new) vs GP2 KPI (M VNĐ)';
+    'KPI Tracking — ' + lbl + ' | ' + getPeriodLabel() + ' · Total GP2 (GP2 + new_new) vs GP2 KPI (M VNĐ)';
 
   if(!kpiRawData.length || !kpiCols || !kpiCols.kpi) {
     tbl.innerHTML = '';
@@ -2266,7 +2276,7 @@ function renderGP3Current() {
   const rows = gp3WeekB.length ? gp3WeekB : gp3WeekA;
   const weekLabel = gp3WeekB.length ? document.getElementById('weekB').value : document.getElementById('weekA').value;
 
-  document.getElementById('gp3-table-title').textContent = `GP3 by ${label} — ${fmtDate(weekLabel)} · ${getQLabel()}`;
+  document.getElementById('gp3-table-title').textContent = `GP3 by ${label} — ${fmtDate(weekLabel)} · ${getPeriodLabel()}`;
 
   const gp2Map  = gp3GroupSum(rows, dim, 'gp2');
   const ppcMap  = gp3GroupSum(rows, dim, 'total_ppc');
@@ -2334,7 +2344,7 @@ function renderGP3Comp() {
   const a = document.getElementById('weekA').value;
   const b = document.getElementById('weekB').value;
 
-  document.getElementById('gp3-comp-title').textContent = `GP3 Comparison by ${label} — ${fmtDate(a)} vs ${fmtDate(b)} · ${getQLabel()}`;
+  document.getElementById('gp3-comp-title').textContent = `GP3 Comparison by ${label} — ${fmtDate(a)} vs ${fmtDate(b)} · ${getPeriodLabel()}`;
 
   const gp3A = gp3GroupSum(gp3WeekA, dim, 'net_contribution');
   const gp3B = gp3GroupSum(gp3WeekB, dim, 'net_contribution');
