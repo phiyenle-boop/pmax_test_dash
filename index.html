@@ -159,7 +159,7 @@ tr:hover td { background: var(--surface2); }
 .kpi-bar { position: relative; height: 10px; background: var(--surface2); border-radius: 20px; overflow: hidden; }
 .kpi-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 20px; transition: width 0.3s; }
 .kpi-bar-legend { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); margin-top: 6px; }
-#kpi-bd-table th.kpi-col, #kpi-bd-table td.kpi-col { background: var(--green-bg); color: var(--green); }
+#kpi-bd-table th.kpi-col, #kpi-bd-table td.kpi-col { color: #12437f; }
 #kpi-bd-table td.kpi-col { font-weight: 600; }
 #kpi-bd-table th:first-child, #kpi-bd-table td:first-child { white-space: normal; word-break: break-word; }
 .kpi-note { margin-top: 12px; font-size: 12px; color: var(--text2); line-height: 1.7; }
@@ -312,6 +312,11 @@ tr:hover td { background: var(--surface2); }
       <div class="sub-tab" onclick="switchBreakdown(4)">Vertical</div>
       <div class="sub-tab" onclick="switchBreakdown(5)">Detail</div>
     </div>
+    <div class="card" id="kpi-bd-card">
+      <div class="card-title" id="kpi-bd-title">KPI Tracking</div>
+      <div class="table-wrap"><table id="kpi-bd-table"></table></div>
+      <div class="kpi-note" id="kpi-bd-note"></div>
+    </div>
     <div class="card" id="bd-q2-card">
       <div class="card-title" id="bd-q2-title">Q2 — GP2 vs GP2 new_new</div>
       <div class="table-wrap"><table id="bd-q2-table"></table></div>
@@ -328,11 +333,6 @@ tr:hover td { background: var(--surface2); }
         <div class="sub-tab" onclick="switchBUDetail(2)">Vertical</div>
       </div>
       <div class="table-wrap"><table id="bd-detail-table"></table></div>
-    </div>
-    <div class="card" id="kpi-bd-card">
-      <div class="card-title" id="kpi-bd-title">KPI Tracking</div>
-      <div class="table-wrap"><table id="kpi-bd-table"></table></div>
-      <div class="kpi-note" id="kpi-bd-note"></div>
     </div>
   </div>
 
@@ -2037,8 +2037,8 @@ function renderKPIBreakdown() {
       '<th>Total GP2 ' + fmtDate(a) + '</th>' +
       '<th>Total GP2 ' + fmtDate(b) + '</th>' +
       '<th class="kpi-col">GP2 KPI</th>' +
-      '<th>Gap GP2 vs LM</th>' +
-      '<th>Gap vs KPI</th><th>Ach%</th><th>ΔAch</th><th>Status</th>' +
+      '<th>Gap vs LM (M)</th>' +
+      '<th>Gap vs KPI (M)</th><th>Achieve vs KPI (%)</th><th>ΔAch</th><th>Status</th>' +
     '</tr></thead><tbody>' + body +
     '<tr class="total-row">' +
       '<td>TOTAL</td>' +
